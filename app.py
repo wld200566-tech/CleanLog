@@ -219,5 +219,35 @@ if st.session_state.page == "文件去重":
                     if len(df) > 0:
                         dups = df[df.duplicated(subset=['hash'], keep=False)]
                         saved = sum(dups.groupby('hash')['size'].apply(lambda x: x.sum() - x.iloc[0]))
+                        # 在文件顶部添加
+import openai
+from dotenv import load_dotenv
+
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# 在侧边栏添加 AI 助手按钮
+with st.sidebar:
+    st.divider()
+    if st.button("🤖 AI 助手", use_container_width=True):
+        st.session_state.page = "AI助手"
+
+# 添加新页面
+if st.session_state.page == "AI助手":
+    st.markdown("## 🤖 AI 数据分析师")
+    
+    if st.session_state.scan_result:
+        st.info("已检测到扫描结果，AI 可以分析重复文件模式...")
+        
+        user_q = st.text_input("询问 AI 关于数据清洗的建议")
+        if st.button("获取 AI 建议"):
+            with st.spinner("AI 思考中..."):
+                response = openai.ChatCompletion.create(
+                    model=os.getenv("OPENAI_MODEL", "gpt-4"),
+                    messages=[{"role": "user", "content": user_q}]
+                )
+                st.markdown(response.choices[0].message.content)
+    else:
+        st.warning("请先执行文件扫描，AI 助手将基于结果提供建议")
                         st.session_state.scan_result = {
                             'total': len(files),
